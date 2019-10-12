@@ -24,16 +24,9 @@ def stats(distribution):
 def degreeStats(g):
 	avg, std = vertex_average(g, "total")
 	total_degrees = g.get_out_degrees(g.get_vertices())
-	maximum = np.amax(total_degrees)
-	minimum = np.amin(total_degrees)
-	med = np.median(total_degrees)
-
 	print("Graus")
-	print("\tMédia: ", avg)
-	print("\tMáximo: ", maximum)
-	print("\tMínimo: ", minimum)
-	print("\tMediana: ", med)
-	print("\tDesvio padrão: ", std)
+	stats(total_degrees)
+	print("\tDesvio padrão (graphtools): ", std)
 
 	distribution = vertex_hist(g, "total")
 	histogram(distribution, "Distribuição de graus", "$k_{total}$", "$NP(k_{in})$", sys.argv[1][:-8] + ".graus")
@@ -64,6 +57,6 @@ def assort(g):
 g = load_graph(sys.argv[1])
 
 degreeStats(g)
-distanceStats(g)
-clusteringStats(g)
-assort(g)
+#distanceStats(g)
+#clusteringStats(g)
+#assort(g)
