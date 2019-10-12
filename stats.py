@@ -1,5 +1,6 @@
 from graph_tool.all import load_graph, vertex_average, vertex_hist, shortest_distance, distance_histogram
 from graph_tool.all import local_clustering, global_clustering, assortativity
+from graph_tool.all import pagerank, betweenness, closeness, katz
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
@@ -54,9 +55,18 @@ def assort(g):
 	print("\tIncidência: ", assortativity(g, "in")[0])
 	print("\tSaída: ", assortativity(g, "out")[0])
 
+def centralidadeStats(g, callback, title):
+	pr = callback(g).a
+	print(title)
+	stats(pr)
+
 g = load_graph(sys.argv[1])
 
 degreeStats(g)
-#distanceStats(g)
-#clusteringStats(g)
-#assort(g)
+distanceStats(g)
+clusteringStats(g)
+assort(g)
+centralidadeStats(g, pagerank, "PageRank")
+#centralidadeStats(g, betweenness, "Betweenness")
+centralidadeStats(g, closeness, "Closeness")
+centralidadeStats(g, katz, "Katz")
