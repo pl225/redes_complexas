@@ -1,14 +1,17 @@
 from graph_tool.all import load_graph, vertex_average, vertex_hist, shortest_distance, distance_histogram
 from graph_tool.all import local_clustering, global_clustering, assortativity
-from graph_tool.all import pagerank, betweenness, closeness, katz
+from graph_tool.all import pagerank, betweenness, closeness, katz, collection
+from graph_tool.all import graph_draw, label_largest_component, GraphView, prop_to_size
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.cm import gist_heat
 import sys
 
 def histogram(distribution, title, xlabel, ylabel, filename):
 	plt.bar(distribution[1][:-1], distribution[0])
 	plt.gca().set(title = title, xlabel = xlabel, ylabel = ylabel)
 	plt.savefig(filename + ".png")
+	plt.clf()
 
 def stats(distribution):
 	maximum = np.amax(distribution)
@@ -23,13 +26,13 @@ def stats(distribution):
 	print("\tDesvio padrão", std)
 
 def degreeStats(g):
-	avg, std = vertex_average(g, "total")
+	avg, std = vertex_average(g, "total" if not g.is_directed() else "in")
 	total_degrees = g.get_out_degrees(g.get_vertices())
 	print("Graus")
 	stats(total_degrees)
 	print("\tDesvio padrão (graphtools): ", std)
 
-	distribution = vertex_hist(g, "total")
+	distribution = vertex_hist(g, "total" if not g.is_directed() else "in")
 	histogram(distribution, "Distribuição de graus", "$k_{total}$", "$NP(k_{in})$", sys.argv[1][:-8] + ".graus")
 
 def distanceStats(g):
@@ -56,17 +59,26 @@ def assort(g):
 	print("\tSaída: ", assortativity(g, "out")[0])
 
 def centralidadeStats(g, callback, title):
-	pr = callback(g).a
+	pr = None 
+	if callback == betweenness:
+		pr = callback(g)[0].a
+	else:
+		if callback == closeness:
+			pr = callback(g, harmonic = True).a
+		else:
+			pr = callback(g).a
 	print(title)
 	stats(pr)
+	histogram(np.histogram(pr), title, "Frequência", "Quantidade", sys.argv[1][:-8] + ".{}".format(title.lower()))
 
 g = load_graph(sys.argv[1])
+#g = collection.data["cond-mat-2003"]
 
 degreeStats(g)
 distanceStats(g)
 clusteringStats(g)
 assort(g)
 centralidadeStats(g, pagerank, "PageRank")
-#centralidadeStats(g, betweenness, "Betweenness")
+centralidadeStats(g, betweenness, "Betweenness")
 centralidadeStats(g, closeness, "Closeness")
 centralidadeStats(g, katz, "Katz")
