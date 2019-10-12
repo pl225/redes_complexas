@@ -5,9 +5,21 @@ import matplotlib.pyplot as plt
 import sys
 
 def histogram(distribution, title, xlabel, ylabel, filename):
-	plt.hist(distribution[0], distribution[1])
+	plt.bar(distribution[1][:-1], distribution[0])
 	plt.gca().set(title = title, xlabel = xlabel, ylabel = ylabel)
 	plt.savefig(filename + ".png")
+
+def stats(distribution):
+	maximum = np.amax(distribution)
+	minimum = np.amin(distribution)
+	med = np.median(distribution)
+	avg = np.average(distribution)
+	std = np.std(distribution)
+	print("\tMédia: ", avg)
+	print("\tMaior: ", maximum)
+	print("\tMínimo: ", minimum)
+	print("\tMediana: ", med)
+	print("\tDesvio padrão", std)
 
 def degreeStats(g):
 	avg, std = vertex_average(g, "total")
@@ -29,24 +41,22 @@ def degreeStats(g):
 def distanceStats(g):
 	dist = shortest_distance(g)
 	np_dist = np.array(dist.get_2d_array(g.get_vertices()))
-	maximum = np.amax(np_dist)
-	minimum = np.amin(np_dist)
-	med = np.median(np_dist)
-	avg = np.average(np_dist)
-	std = np.std(np_dist)
-
 	print("Distâncias")
-	print("\tMédia: ", avg)
-	print("\tDiâmetro: ", maximum)
-	print("\tMínimo: ", minimum)
-	print("\tMediana: ", med)
-	print("\tDesvio padrão", std)
+	stats(np_dist)
 
 	distribution = distance_histogram(g)
-	print(distribution)
-	histogram(distribution, "Distribuição de distâncias", "$d$", "$f_d(d)$", sys.argv[1][:-8] + ".distancias")
+	histogram(distribution, "Distribuição de distâncias", "$d$", "$f_{D}(d)$", sys.argv[1][:-8] + ".distancias")
+
+def clusteringStats(g):
+	clustring_vertices = local_clustering(g).a
+	print("Clusterização")
+	stats(clustring_vertices)
+	print("\tGlobal", global_clustering(g)[0])
+
+	histogram(np.histogram(clustring_vertices), "Distribuição de clusterização", "$C_i$", "$C$", sys.argv[1][:-8] + ".clusterizacao")
 
 g = load_graph(sys.argv[1])
 
 degreeStats(g)
 distanceStats(g)
+clusteringStats(g)
