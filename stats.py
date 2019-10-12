@@ -1,5 +1,5 @@
 from graph_tool.all import load_graph, vertex_average, vertex_hist, shortest_distance, distance_histogram
-from graph_tool.all import local_clustering, global_clustering
+from graph_tool.all import local_clustering, global_clustering, assortativity
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
@@ -55,8 +55,15 @@ def clusteringStats(g):
 
 	histogram(np.histogram(clustring_vertices), "Distribuição de clusterização", "$C_i$", "$C$", sys.argv[1][:-8] + ".clusterizacao")
 
+def assort(g):
+	print("Assortatividade")
+	print("\tTotal: ", assortativity(g, "total")[0])
+	print("\tIncidência: ", assortativity(g, "in")[0])
+	print("\tSaída: ", assortativity(g, "out")[0])
+
 g = load_graph(sys.argv[1])
 
 degreeStats(g)
 distanceStats(g)
 clusteringStats(g)
+assort(g)
