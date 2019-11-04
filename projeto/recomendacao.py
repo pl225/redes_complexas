@@ -33,19 +33,22 @@ def msd(g, adjMatrix, partition, i, l):
 
 	similaridades_i_j = sim_i_vertices(g, i, termos)
 	somatorios_alpha = sum_sim(g, anuncios, similaridades_i_j)
+	f_alpha = np.zeros(g.num_vertices())
+	f_alpha[g.get_all_neighbors(i)] = 1
 
 	for beta in anuncios:
 		f_i_beta = 0
 		for j in termos:
 			f_i_j = 0
 			for alpha in anuncios:
-				f_i_j += (adjMatrix[i, alpha] * adjMatrix[j, alpha] * similaridades_i_j[0, j]) / somatorios_alpha[0, alpha]
+				f_i_j += f_alpha[alpha] * ((adjMatrix[i, alpha] * adjMatrix[j, alpha] * similaridades_i_j[0, j]) / somatorios_alpha[0, alpha])
 
 			imp_grau_beta = g.get_total_degrees([beta])[0] ** l
 			imp_grau_j = g.get_total_degrees([j])[0] ** (1 - l)
 			
 			f_i_beta += f_i_j * (adjMatrix[j, beta] / (imp_grau_beta * imp_grau_j))
 		v.append((beta, f_i_beta))
+	return v
 
 def main():
 	g = load_graph("permu-hw7.graphml")
