@@ -59,30 +59,39 @@ def msd(g, adjMatrix, partition, i, l):
 def md(g, adjMatrix, partition, i):
 	termos = g.get_vertices()[partition.a == 1]
 	anuncios = g.get_vertices()[partition.a == 0]
-	v = []
 
-	f_alpha = np.zeros(g.num_vertices())
-	f_alpha[g.get_all_neighbors(i)] = 1
+	f_beta = np.zeros(g.num_vertices()) # o número de anuncios e de termos não é igual ao número de vértices,
+	f_i = np.zeros(g.num_vertices()) # mas isso é feito para facilitar a indexação
 
-	for beta in anuncios:
-		f_i_beta = 0
-		for j in termos:
-			f_i_j = 0
-			for alpha in anuncios:
-				f_i_j += f_alpha[alpha] * ((adjMatrix[i, alpha] * adjMatrix[j, alpha]) / g.get_total_degrees([alpha])[0])
-			
-			f_i_beta += f_i_j * (adjMatrix[j, beta] / (g.get_total_degrees([j])[0]))
-		
-		v.append((beta, f_i_beta))
-	return v
+	termosItensComum = set()
+	anunciosNosTermos = set()
+	vizinhosI = g.get_all_neighbors(i)
+
+	for alpha in vizinhosI:
+		jotas = g.get_all_neighbors(alpha) #j
+
+		termosItensComum |= set(jotas) # conjunto dos termos que possuem anuncios que i possui
+
+		for j in jotas:
+			if f_i[j] == 0:
+				anunciosEmJ = g.get_all_neighbors(j)
+				jotasComItensComum = np.intersect1d(vizinhosI, anunciosEmJ, True) #interseção dos vizinhos de j comuns a i
+
+				f_i[j] = np.sum(1 / g.get_total_degrees(jotasComItensComum))
+				anunciosNosTermos |= set(anunciosEmJ)
+
+	for beta in anunciosNosTermos:
+		for j in termosItensComum:
+			f_beta[beta] += ((adjMatrix[j, beta] / g.get_total_degrees([j])[0]) * f_i[j])
+
+	return f_beta
 
 def main():
 	g = load_graph("permu-hw7.graphml")
 	_, partition = is_bipartite(g, True)
 	a = adjacency(g)
 	#msd(g, a, partition, 0, 0.55)
-	r = md(g, a, partition, 0)
-	print (r)
+	r = md(g, a, partition, 3)
 
 if __name__ == '__main__':
 	main()
