@@ -50,11 +50,39 @@ def msd(g, adjMatrix, partition, i, l):
 		v.append((beta, f_i_beta))
 	return v
 
+"""
+	g = grafo
+	adjMatrix = matriz de adjacências
+	partition = vertor que indica a qual conjunto de partição cada vértice pertence
+	i = termo para o qual se deseja recomendar anúncios
+"""
+def md(g, adjMatrix, partition, i):
+	termos = g.get_vertices()[partition.a == 1]
+	anuncios = g.get_vertices()[partition.a == 0]
+	v = []
+
+	f_alpha = np.zeros(g.num_vertices())
+	f_alpha[g.get_all_neighbors(i)] = 1
+
+	for beta in anuncios:
+		f_i_beta = 0
+		for j in termos:
+			f_i_j = 0
+			for alpha in anuncios:
+				f_i_j += f_alpha[alpha] * ((adjMatrix[i, alpha] * adjMatrix[j, alpha]) / g.get_total_degrees([alpha])[0])
+			
+			f_i_beta += f_i_j * (adjMatrix[j, beta] / (g.get_total_degrees([j])[0]))
+		
+		v.append((beta, f_i_beta))
+	return v
+
 def main():
 	g = load_graph("permu-hw7.graphml")
 	_, partition = is_bipartite(g, True)
 	a = adjacency(g)
-	msd(g, a, partition, 0, 0.55)
+	#msd(g, a, partition, 0, 0.55)
+	r = md(g, a, partition, 0)
+	print (r)
 
 if __name__ == '__main__':
 	main()
