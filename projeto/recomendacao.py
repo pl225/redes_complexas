@@ -2,7 +2,6 @@ from graph_tool.all import load_graph, is_bipartite, adjacency, vertex_similarit
 from scipy.sparse import csr_matrix
 import numpy as np
 
-
 # calcula a similaridade de um vértice para todos os outros do mesmo grupo que ele
 def sim_i_vertices(g, i, termos):
 	row = np.full(termos.size, 0)
@@ -63,14 +62,11 @@ def md(g, adjMatrix, partition, i):
 	f_beta = np.zeros(g.num_vertices()) # o número de anuncios e de termos não é igual ao número de vértices,
 	f_i = np.zeros(g.num_vertices()) # mas isso é feito para facilitar a indexação
 
-	termosItensComum = set()
 	anunciosNosTermos = set()
 	vizinhosI = g.get_all_neighbors(i)
 
 	for alpha in vizinhosI:
 		jotas = g.get_all_neighbors(alpha) #j
-
-		termosItensComum |= set(jotas) # conjunto dos termos que possuem anuncios que i possui
 
 		for j in jotas:
 			if f_i[j] == 0:
@@ -81,8 +77,8 @@ def md(g, adjMatrix, partition, i):
 				anunciosNosTermos |= set(anunciosEmJ)
 
 	for beta in anunciosNosTermos:
-		for j in termosItensComum:
-			f_beta[beta] += ((adjMatrix[j, beta] / g.get_total_degrees([j])[0]) * f_i[j])
+		vizinhos = g.get_all_neighbors(beta)
+		f_beta[beta] = np.sum((1 / g.get_total_degrees(vizinhos)) * f_i[vizinhos])
 
 	return f_beta
 
@@ -91,6 +87,7 @@ def main():
 	_, partition = is_bipartite(g, True)
 	a = adjacency(g)
 	#msd(g, a, partition, 0, 0.55)
+
 	r = md(g, a, partition, 3)
 
 if __name__ == '__main__':
