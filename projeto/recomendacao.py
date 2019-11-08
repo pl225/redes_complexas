@@ -20,15 +20,17 @@ def msd(g, adjMatrix, partition, i, l):
 
 	for alpha in vizinhosI:
 		jotas = g.get_all_neighbors(alpha)
-		sim_i_k = np.sum(vertex_similarity(g, "salton", [(i, j) for j in jotas]))
 		
 		for j in jotas:
 			if f_i[j] == 0:
 				anunciosEmJ = g.get_all_neighbors(j)
 				jotasComItensComum = np.intersect1d(vizinhosI, anunciosEmJ, True) #interseção dos vizinhos de j comuns a i
 				sim_i_j = vertex_similarity(g, "salton", [(i, j)])[0]
+				
+				pares_i_k = [[(i, k) for k in g.get_all_neighbors(a)] for a in jotasComItensComum]
+				sim_i_k = np.array([np.sum(vertex_similarity(g, "salton", arrayPar)) for arrayPar in pares_i_k])
 
-				f_i[j] = (sim_i_j / sim_i_k) * jotasComItensComum.size
+				f_i[j] = np.sum(sim_i_j / sim_i_k)
 				anunciosNosTermos |= set(anunciosEmJ)
 
 		for beta in anunciosNosTermos:
