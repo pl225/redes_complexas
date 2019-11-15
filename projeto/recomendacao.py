@@ -6,6 +6,7 @@ import numpy as np
 	g = grafo
 	partition = vertor que indica a qual conjunto de partição cada vértice pertence
 	i = termo para o qual se deseja recomendar anúncios
+	l = numero [0, 1] para indicar a importância dos graus dos termos e dos anúncios
 """
 def msd(g, partition, i, l):
 	termos = g.get_vertices()[partition.a == 1]
@@ -42,8 +43,9 @@ def msd(g, partition, i, l):
 	g = grafo
 	partition = vertor que indica a qual conjunto de partição cada vértice pertence
 	i = termo para o qual se deseja recomendar anúncios
+	booleano para indicar a normalização de f_i[j] pelo grau do vértice i
 """
-def md(g, partition, i):
+def md(g, partition, i, normalizar = False):
 	termos = g.get_vertices()[partition.a == 1]
 	anuncios = g.get_vertices()[partition.a == 0]
 
@@ -52,6 +54,7 @@ def md(g, partition, i):
 
 	anunciosNosTermos = set()
 	vizinhosI = g.get_all_neighbors(i)
+	grauI = 1 if not normalizar else vizinhosI.size
 
 	for alpha in vizinhosI:
 		jotas = g.get_all_neighbors(alpha) #j
@@ -61,7 +64,7 @@ def md(g, partition, i):
 				anunciosEmJ = g.get_all_neighbors(j)
 				jotasComItensComum = np.intersect1d(vizinhosI, anunciosEmJ, True) #interseção dos vizinhos de j comuns a i
 
-				f_i[j] = np.sum(1 / g.get_total_degrees(jotasComItensComum))
+				f_i[j] = np.sum(1 / g.get_total_degrees(jotasComItensComum)) / grauI
 				anunciosNosTermos |= set(anunciosEmJ)
 
 	for beta in anunciosNosTermos:
@@ -77,6 +80,7 @@ def main():
 	#r = msd(g, partition, 3, 0.55)
 
 	r = md(g, partition, 3)
+	
 
 if __name__ == '__main__':
 	main()
