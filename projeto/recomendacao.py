@@ -1,14 +1,13 @@
-from graph_tool.all import load_graph, is_bipartite, adjacency, vertex_similarity
+from graph_tool.all import load_graph, is_bipartite, vertex_similarity
 from scipy.sparse import csr_matrix
 import numpy as np
 
 """
 	g = grafo
-	adjMatrix = matriz de adjacências
 	partition = vertor que indica a qual conjunto de partição cada vértice pertence
 	i = termo para o qual se deseja recomendar anúncios
 """
-def msd(g, adjMatrix, partition, i, l):
+def msd(g, partition, i, l):
 	termos = g.get_vertices()[partition.a == 1]
 	anuncios = g.get_vertices()[partition.a == 0]
 
@@ -33,19 +32,18 @@ def msd(g, adjMatrix, partition, i, l):
 				f_i[j] = np.sum(sim_i_j / sim_i_k)
 				anunciosNosTermos |= set(anunciosEmJ)
 
-		for beta in anunciosNosTermos:
-			vizinhos = g.get_all_neighbors(beta)
-			f_beta[beta] = np.sum((1 / ((g.get_total_degrees([beta])[0] ** l) * (g.get_total_degrees(vizinhos) ** (1 - l)))) * f_i[vizinhos])	
+	for beta in anunciosNosTermos:
+		vizinhos = g.get_all_neighbors(beta)
+		f_beta[beta] = np.sum((1 / ((g.get_total_degrees([beta])[0] ** l) * (g.get_total_degrees(vizinhos) ** (1 - l)))) * f_i[vizinhos])	
 
 	return f_beta
 
 """
 	g = grafo
-	adjMatrix = matriz de adjacências
 	partition = vertor que indica a qual conjunto de partição cada vértice pertence
 	i = termo para o qual se deseja recomendar anúncios
 """
-def md(g, adjMatrix, partition, i):
+def md(g, partition, i):
 	termos = g.get_vertices()[partition.a == 1]
 	anuncios = g.get_vertices()[partition.a == 0]
 
@@ -75,11 +73,10 @@ def md(g, adjMatrix, partition, i):
 def main():
 	g = load_graph("permu-hw7.graphml")
 	_, partition = is_bipartite(g, True)
-	a = adjacency(g)
 
-	r = msd(g, a, partition, 3, 0.55)
+	#r = msd(g, partition, 3, 0.55)
 
-	#r = md(g, a, partition, 3)
+	r = md(g, partition, 3)
 
 if __name__ == '__main__':
 	main()
