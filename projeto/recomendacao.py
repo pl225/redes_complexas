@@ -74,16 +74,16 @@ def md(g, partition, i, normalizar = False):
 	return f_beta
 
 def main():
-	np.random.seed(0)
+	np.random.seed(1)
 	g = load_graph("permu-hw7.graphml")
 	_, partition = is_bipartite(g, True)
 
-	with open("resultados.txt", 'w+') as f:
+	with open("resultados.txt", 'a') as f:
 
 		prop_e = g.new_edge_property("bool")
 		prop_e.a = True
 
-		termosSelecionados = np.random.choice(g.get_vertices()[partition.a == 1], 100, False)
+		termosSelecionados = np.random.choice(g.get_vertices()[partition.a == 1], 400, False)
 
 		for ind, i in enumerate(termosSelecionados):
 			viz = g.get_all_neighbors(i)
