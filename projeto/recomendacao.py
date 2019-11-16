@@ -74,13 +74,29 @@ def md(g, partition, i, normalizar = False):
 	return f_beta
 
 def main():
+	np.random.seed(0)
 	g = load_graph("permu-hw7.graphml")
 	_, partition = is_bipartite(g, True)
 
-	#r = msd(g, partition, 3, 0.55)
+	with open("resultados.txt", 'w+') as f:
 
-	r = md(g, partition, 3)
+		prop_e = g.new_edge_property("bool")
+		prop_e.a = True
+
+		termosSelecionados = np.random.choice(g.get_vertices()[partition.a == 1], 100, False)
+
+		for ind, i in enumerate(termosSelecionados):
+			viz = g.get_all_neighbors(i)
+			e = np.random.choice(viz)
+			aresta = g.edge(i, e)
+			prop_e[aresta] = False
+			g.set_edge_filter(prop_e)
+
+			r = md(g, partition, i)
+			indices = (-r).argsort()
+			f.write("Termo: {}, anúncio: {}, posição: {}, valor: {}\n".format(i, e, np.argwhere(indices == e), r[e]))
+			prop_e[aresta] = True
+			print("Termo: {} de índice de loop {} terminado.".format(i, ind))
 	
-
 if __name__ == '__main__':
 	main()
