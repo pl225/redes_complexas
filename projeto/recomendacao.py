@@ -1,7 +1,11 @@
-from graph_tool.all import load_graph, is_bipartite, vertex_similarity
-from scipy.sparse import csr_matrix
+from graph_tool.all import load_graph, is_bipartite, vertex_similarity, pagerank, vertex_average
+from itertools import combinations
 import numpy as np
-
+import re
+import os
+import operator
+import collections
+import matplotlib.pyplot as plt
 """
 	g = grafo
 	partition = vertor que indica a qual conjunto de partição cada vértice pertence
@@ -73,17 +77,13 @@ def md(g, partition, i, normalizar = False):
 
 	return f_beta
 
-def main():
-	np.random.seed(1)
-	g = load_graph("permu-hw7.graphml")
-	_, partition = is_bipartite(g, True)
-
+def executar_recomendacoes(g, partition):
 	with open("resultados.txt", 'a') as f:
 
 		prop_e = g.new_edge_property("bool")
 		prop_e.a = True
 
-		termosSelecionados = np.random.choice(g.get_vertices()[partition.a == 1], 400, False)
+		termosSelecionados = np.random.choice(g.get_vertices()[partition.a == 1], 10000, False) #41800
 
 		for ind, i in enumerate(termosSelecionados):
 			viz = g.get_all_neighbors(i)
@@ -97,6 +97,105 @@ def main():
 			f.write("Termo: {}, anúncio: {}, posição: {}, valor: {}\n".format(i, e, np.argwhere(indices == e), r[e]))
 			prop_e[aresta] = True
 			print("Termo: {} de índice de loop {} terminado.".format(i, ind))
+
+def graus_acumulados(g, funcao):
+	file = open("resultados.txt", "r")
+	graus = np.array([])
+	for linha in file:
+		tokens = linha.split()
+		termo = int(tokens[1][:-1])
+		pos = int(re.findall(r'\d+', tokens[5])[0])
+		valor = float(tokens[7])
+		if funcao(pos, valor): # pos < 5; pos > 100 and valor == 0.0; pos >= 5 and pos <= 100 and valor != 0.0; pos > 100 and valor != 0.0
+			graus = np.append(graus, g.get_total_degrees([termo])[0])
+	file.close()
+	return graus
+
+def ccdf(graus):
+	counter = collections.Counter(graus)
+	graus_sorted = sorted(counter.items(), key=operator.itemgetter(0))
+	print(graus_sorted)
+	x = []
+	y = []
+	acumulado = 0
+	fracao = 0.0
+	total = graus.size
+	for tupla in graus_sorted:
+		x.append(tupla[0])
+		y.append(1 - fracao) #y.append((total - acumulado) / graus.size)
+		fracao += tupla[1] / total
+		#acumulado += tupla[1]
+	return x, y
+
+def main():
+	g = load_graph("permu-hw7.graphml")
+	_, partition = is_bipartite(g, True)
+
+	#executar_recomendacoes(g, partition)
 	
+	total = g.get_vertices().size
+	file = open("resultados.txt", "r")
+	xx = np.array([])
+	yy = np.array([])
+	graus = np.array([])
+	lista = np.array([])
+	for linha in file:
+		tokens = linha.split()
+		termo = int(tokens[1][:-1])
+		anuncio = int(tokens[3][:-1])
+		pos = int(re.findall(r'\d+', tokens[5])[0])
+		valor = float(tokens[7])
+		if pos > 100 and valor == 0.0: # pos < 5; pos > 100 and valor == 0.0; pos >= 5 and pos <= 100 and valor != 0.0; pos > 100 and valor != 0.0
+			s = [np.intersect1d(g.get_all_neighbors(par[0]), g.get_all_neighbors(par[1])).size / np.union1d(g.get_all_neighbors(par[0]), g.get_all_neighbors(par[1])).size for par in list(combinations(g.get_all_neighbors(termo), 2))]
+			xx = np.append(xx, np.max(s))
+			#yy = np.append(yy, (total - pos) / total)
+			#print("Termo: {}, pos: {}, grau: {}, max: {}, min: {}, média: {}".
+				#format(termo, pos, g.get_total_degrees([termo])[0], np.max(s), np.min(s), np.average(s)))
+			#graus = np.append(graus, g.get_total_degrees([termo])[0])
+			#print("Termo: {}, pagerank: {}".format(termo, pr.a[termo]))
+			#lista = np.append(lista, np.average(g.get_total_degrees(g.get_all_neighbors(termo))))
+			#print("Termo: {}, média: {}".format(termo, np.average(g.get_total_degrees(g.get_all_neighbors(termo)))))
+	file.close()
+	#print(yy)
+	#print(plt.plot(xx, yy, 'ro'))
+	m, n, _ = plt.hist(xx)
+	plt.clf()
+	acumulado = 0
+	fracao = 0.0
+	total = graus.size
+	x = []
+	y = []
+	soma = np.sum(m)
+	for i in range(1, len(n)):
+		x.append(n[i])
+		y.append(1 - fracao) #y.append((total - acumulado) / graus.size)
+		fracao += m[i - 1] / soma
+		#acumulado += tupla[1]
+	print(x, y)
+	plt.plot(x, y, 'ro')
+	plt.show()
+	
+	"""
+	graus = graus_acumulados(g, lambda pos, valor: pos < 5)
+	x1, y1 = ccdf(graus)
+
+	graus = graus_acumulados(g, lambda pos, valor: pos >= 5 and pos <= 100 and valor != 0.0)
+	x2, y2 = ccdf(graus)
+
+	graus = graus_acumulados(g, lambda pos, valor: pos > 100 and valor != 0.0)
+	x3, y3 = ccdf(graus)
+
+	graus = graus_acumulados(g, lambda pos, valor: pos > 100 and valor == 0.0)
+	x4, y4 = ccdf(graus)
+	
+	plt.plot(x1, y1, 'rx', x2, y2, 'y--', x3, y3, 'bs', x4, y4, 'g^')
+	plt.xlabel('$d$')
+	plt.ylabel('Fração de amostras $\\geq d$')
+	plt.legend(('Bom', 'Médio', 'Ruim', 'Péssimo'), loc='right')
+	plt.yscale('log')
+	plt.suptitle('Distribuição de graus dos vértices termos classificados')
+	plt.show()	
+	"""
+
 if __name__ == '__main__':
 	main()
