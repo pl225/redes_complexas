@@ -127,42 +127,25 @@ def ccdf(graus):
 		#acumulado += tupla[1]
 	return x, y
 
-def main():
-	g = load_graph("permu-hw7.graphml")
-	_, partition = is_bipartite(g, True)
-
-	#executar_recomendacoes(g, partition)
-	
-	total = g.get_vertices().size
+def similaridade_acumulada(g, funcao, np_funcao):
 	file = open("resultados.txt", "r")
 	xx = np.array([])
-	yy = np.array([])
-	graus = np.array([])
-	lista = np.array([])
 	for linha in file:
 		tokens = linha.split()
 		termo = int(tokens[1][:-1])
-		anuncio = int(tokens[3][:-1])
 		pos = int(re.findall(r'\d+', tokens[5])[0])
 		valor = float(tokens[7])
-		if pos > 100 and valor == 0.0: # pos < 5; pos > 100 and valor == 0.0; pos >= 5 and pos <= 100 and valor != 0.0; pos > 100 and valor != 0.0
+		if funcao(pos, valor): # pos < 5; pos > 100 and valor == 0.0; pos >= 5 and pos <= 100 and valor != 0.0; pos > 100 and valor != 0.0
 			s = [np.intersect1d(g.get_all_neighbors(par[0]), g.get_all_neighbors(par[1])).size / np.union1d(g.get_all_neighbors(par[0]), g.get_all_neighbors(par[1])).size for par in list(combinations(g.get_all_neighbors(termo), 2))]
-			xx = np.append(xx, np.max(s))
-			#yy = np.append(yy, (total - pos) / total)
-			#print("Termo: {}, pos: {}, grau: {}, max: {}, min: {}, média: {}".
-				#format(termo, pos, g.get_total_degrees([termo])[0], np.max(s), np.min(s), np.average(s)))
-			#graus = np.append(graus, g.get_total_degrees([termo])[0])
-			#print("Termo: {}, pagerank: {}".format(termo, pr.a[termo]))
-			#lista = np.append(lista, np.average(g.get_total_degrees(g.get_all_neighbors(termo))))
-			#print("Termo: {}, média: {}".format(termo, np.average(g.get_total_degrees(g.get_all_neighbors(termo)))))
+			xx = np.append(xx, np_funcao(s))
 	file.close()
-	#print(yy)
-	#print(plt.plot(xx, yy, 'ro'))
-	m, n, _ = plt.hist(xx)
-	plt.clf()
-	acumulado = 0
+	return xx
+
+def hist_ccdf(valores):
+	m, n = np.histogram(valores)
+	#acumulado = 0
 	fracao = 0.0
-	total = graus.size
+	#total = graus.size
 	x = []
 	y = []
 	soma = np.sum(m)
@@ -170,12 +153,21 @@ def main():
 		x.append(n[i])
 		y.append(1 - fracao) #y.append((total - acumulado) / graus.size)
 		fracao += m[i - 1] / soma
-		#acumulado += tupla[1]
-	print(x, y)
-	plt.plot(x, y, 'ro')
+	return x, y
+
+def main():
+	g = load_graph("permu-hw7.graphml")
+	_, partition = is_bipartite(g, True)
+
+	#executar_recomendacoes(g, partition)	
+	
+	similaridades = similaridade_acumulada(g, lambda pos, valor: pos < 5, np.max)
+	x1, y1 = hist_ccdf(similaridades)
+	plt.plot(x1, y1, 'ro')
 	plt.show()
 	
 	"""
+	distribuição de graus
 	graus = graus_acumulados(g, lambda pos, valor: pos < 5)
 	x1, y1 = ccdf(graus)
 
