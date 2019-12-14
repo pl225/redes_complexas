@@ -157,27 +157,49 @@ def hist_ccdf(valores):
 
 def main():
 	g = load_graph("permu-hw7.graphml")
-	_, partition = is_bipartite(g, True)
+	#_, partition = is_bipartite(g, True)
 
 	#executar_recomendacoes(g, partition)	
+
+	funcMelhores = lambda pos, valor: pos < 5
+	funcMedianos = lambda pos, valor: pos >= 5 and pos <= 100 and valor != 0.0
+	funcRuins = lambda pos, valor: pos > 100 and valor != 0.0
+	funcPessimos = lambda pos, valor: pos > 100 and valor == 0.0
 	
-	similaridades = similaridade_acumulada(g, lambda pos, valor: pos < 5, np.max)
+	similaridades = similaridade_acumulada(g, funcMelhores, np.median)
 	x1, y1 = hist_ccdf(similaridades)
-	plt.plot(x1, y1, 'ro')
+
+	similaridades = similaridade_acumulada(g, funcMedianos, np.median)
+	x2, y2 = hist_ccdf(similaridades)
+
+	similaridades = similaridade_acumulada(g, funcRuins, np.median)
+	x3, y3 = hist_ccdf(similaridades)
+
+	similaridades = similaridade_acumulada(g, funcPessimos, np.median)
+	x4, y4 = hist_ccdf(similaridades)
+
+	plt.xlabel('Mediana das similaridades dos vizinhos')
+	plt.ylabel('Fração de amostras $\\geq$ mediana')
+	plt.plot(x1, y1, 'r')
+	plt.plot(x2, y2, 'y')
+	plt.plot(x3, y3, 'b')
+	plt.plot(x4, y4, 'g')
+	plt.legend(('Bom', 'Médio', 'Ruim', 'Péssimo'), loc='right')
+	plt.suptitle('Análise da similaridade dos vizinhos dos vértices termos')
 	plt.show()
 	
 	"""
 	distribuição de graus
-	graus = graus_acumulados(g, lambda pos, valor: pos < 5)
+	graus = graus_acumulados(g, funcMelhores)
 	x1, y1 = ccdf(graus)
 
-	graus = graus_acumulados(g, lambda pos, valor: pos >= 5 and pos <= 100 and valor != 0.0)
+	graus = graus_acumulados(g, funcMedianos)
 	x2, y2 = ccdf(graus)
 
-	graus = graus_acumulados(g, lambda pos, valor: pos > 100 and valor != 0.0)
+	graus = graus_acumulados(g, funcRuins)
 	x3, y3 = ccdf(graus)
 
-	graus = graus_acumulados(g, lambda pos, valor: pos > 100 and valor == 0.0)
+	graus = graus_acumulados(g, funcPessimos)
 	x4, y4 = ccdf(graus)
 	
 	plt.plot(x1, y1, 'rx', x2, y2, 'y--', x3, y3, 'bs', x4, y4, 'g^')
